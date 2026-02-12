@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState, useEffect, use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState, useEffect, use } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -20,19 +20,25 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+} from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible'
+} from "@/components/ui/collapsible";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 import {
   FolderTree,
   Plus,
@@ -43,29 +49,34 @@ import {
   Trash2,
   FolderOpen,
   Folder,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import type { Category } from '@/types'
+} from "lucide-react";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
+import type { Category } from "@/types";
 
 interface CategoryTreeItemProps {
-  category: Category & { children?: Category[] }
-  level: number
-  onEdit: (category: Category) => void
-  onDelete: (id: string) => void
+  category: Category & { children?: Category[] };
+  level: number;
+  onEdit: (category: Category) => void;
+  onDelete: (id: string) => void;
 }
 
-function CategoryTreeItem({ category, level, onEdit, onDelete }: CategoryTreeItemProps) {
-  const [isOpen, setIsOpen] = useState(level === 0)
-  const hasChildren = category.children && category.children.length > 0
+function CategoryTreeItem({
+  category,
+  level,
+  onEdit,
+  onDelete,
+}: CategoryTreeItemProps) {
+  const [isOpen, setIsOpen] = useState(level === 0);
+  const hasChildren = category.children && category.children.length > 0;
 
   return (
     <div>
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <div
           className={cn(
-            'flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 group',
-            level > 0 && 'ml-6'
+            "flex items-center justify-between px-3 py-2 rounded-lg hover:bg-muted/50 group",
+            level > 0 && "ml-6",
           )}
         >
           <div className="flex items-center gap-2">
@@ -74,8 +85,8 @@ function CategoryTreeItem({ category, level, onEdit, onDelete }: CategoryTreeIte
                 <Button variant="ghost" size="icon" className="h-6 w-6">
                   <ChevronRight
                     className={cn(
-                      'h-4 w-4 transition-transform',
-                      isOpen && 'rotate-90'
+                      "h-4 w-4 transition-transform",
+                      isOpen && "rotate-90",
                     )}
                   />
                 </Button>
@@ -137,165 +148,170 @@ function CategoryTreeItem({ category, level, onEdit, onDelete }: CategoryTreeIte
         )}
       </Collapsible>
     </div>
-  )
+  );
 }
 
 export default function CategoriesPage({
   params,
 }: {
-  params: Promise<{ shopId: string }>
+  params: Promise<{ shopId: string }>;
 }) {
-  const { shopId } = use(params)
-  const [categories, setCategories] = useState<Category[]>([])
-  const [categoryTree, setCategoryTree] = useState<Category[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [editingCategory, setEditingCategory] = useState<Category | null>(null)
-  
+  const { shopId } = use(params);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryTree, setCategoryTree] = useState<Category[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+
   const [formData, setFormData] = useState({
-    name: '',
-    name_tamil: '',
-    parent_id: '',
-  })
+    name: "",
+    name_tamil: "",
+    parent_id: "none",
+  });
 
   async function fetchCategories() {
-    const supabase = createClient()
+    const supabase = createClient();
     const { data } = await supabase
-      .from('categories')
-      .select('*')
-      .eq('shop_id', shopId)
-      .order('sort_order', { ascending: true })
-      .order('name', { ascending: true })
+      .from("categories")
+      .select("*")
+      .eq("shop_id", shopId)
+      .order("sort_order", { ascending: true })
+      .order("name", { ascending: true });
 
-    const flatCategories = data || []
-    setCategories(flatCategories)
-    
+    const flatCategories = data || [];
+    setCategories(flatCategories);
+
     // Build tree structure
-    const tree = buildCategoryTree(flatCategories)
-    setCategoryTree(tree)
-    setLoading(false)
+    const tree = buildCategoryTree(flatCategories);
+    setCategoryTree(tree);
+    setLoading(false);
   }
 
   function buildCategoryTree(flatCategories: Category[]): Category[] {
-    const map = new Map<string, Category & { children: Category[] }>()
-    const roots: (Category & { children: Category[] })[] = []
+    const map = new Map<string, Category & { children: Category[] }>();
+    const roots: (Category & { children: Category[] })[] = [];
 
     // First pass: create map entries with children arrays
     flatCategories.forEach((cat) => {
-      map.set(cat.id, { ...cat, children: [] })
-    })
+      map.set(cat.id, { ...cat, children: [] });
+    });
 
     // Second pass: build hierarchy
     flatCategories.forEach((cat) => {
-      const node = map.get(cat.id)!
+      const node = map.get(cat.id)!;
       if (cat.parent_id && map.has(cat.parent_id)) {
-        map.get(cat.parent_id)!.children.push(node)
+        map.get(cat.parent_id)!.children.push(node);
       } else {
-        roots.push(node)
+        roots.push(node);
       }
-    })
+    });
 
-    return roots
+    return roots;
   }
 
   useEffect(() => {
-    fetchCategories()
-  }, [shopId])
+    fetchCategories();
+  }, [shopId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSaving(true)
+    e.preventDefault();
+    setSaving(true);
 
     try {
-      const supabase = createClient()
+      const supabase = createClient();
 
       if (editingCategory) {
         const { error } = await supabase
-          .from('categories')
+          .from("categories")
           .update({
             name: formData.name,
             name_tamil: formData.name_tamil || null,
-            parent_id: formData.parent_id || null,
+            parent_id:
+              formData.parent_id === "none" ? null : formData.parent_id,
           })
-          .eq('id', editingCategory.id)
+          .eq("id", editingCategory.id);
 
         if (error) {
-          toast.error(error.message)
-          return
+          toast.error(error.message);
+          return;
         }
-        toast.success('Category updated!')
+        toast.success("Category updated!");
       } else {
-        const { error } = await supabase.from('categories').insert({
+        const { error } = await supabase.from("categories").insert({
           shop_id: shopId,
           name: formData.name,
           name_tamil: formData.name_tamil || null,
-          parent_id: formData.parent_id || null,
-        })
+          parent_id: formData.parent_id === "none" ? null : formData.parent_id,
+        });
 
         if (error) {
-          toast.error(error.message)
-          return
+          toast.error(error.message);
+          return;
         }
-        toast.success('Category created!')
+        toast.success("Category created!");
       }
 
-      setDialogOpen(false)
-      resetForm()
-      fetchCategories()
+      setDialogOpen(false);
+      resetForm();
+      fetchCategories();
     } catch {
-      toast.error('An unexpected error occurred')
+      toast.error("An unexpected error occurred");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleEdit = (category: Category) => {
-    setEditingCategory(category)
+    setEditingCategory(category);
     setFormData({
       name: category.name,
-      name_tamil: category.name_tamil || '',
-      parent_id: category.parent_id || '',
-    })
-    setDialogOpen(true)
-  }
+      name_tamil: category.name_tamil || "",
+      parent_id: category.parent_id || "none",
+    });
+    setDialogOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this category? Products in this category will be uncategorized.')) return
+    if (
+      !confirm(
+        "Are you sure you want to delete this category? Products in this category will be uncategorized.",
+      )
+    )
+      return;
 
-    const supabase = createClient()
-    const { error } = await supabase
-      .from('categories')
-      .delete()
-      .eq('id', id)
+    const supabase = createClient();
+    const { error } = await supabase.from("categories").delete().eq("id", id);
 
     if (error) {
-      toast.error(error.message)
-      return
+      toast.error(error.message);
+      return;
     }
 
-    toast.success('Category deleted')
-    fetchCategories()
-  }
+    toast.success("Category deleted");
+    fetchCategories();
+  };
 
   const resetForm = () => {
-    setEditingCategory(null)
-    setFormData({ name: '', name_tamil: '', parent_id: '' })
-  }
+    setEditingCategory(null);
+    setFormData({ name: "", name_tamil: "", parent_id: "none" });
+  };
 
   const getAvailableParents = () => {
     // Can't set self or descendants as parent
-    if (!editingCategory) return categories
-    
-    const descendants = new Set<string>()
+    if (!editingCategory) return categories;
+
+    const descendants = new Set<string>();
     const findDescendants = (id: string) => {
-      descendants.add(id)
-      categories.filter(c => c.parent_id === id).forEach(c => findDescendants(c.id))
-    }
-    findDescendants(editingCategory.id)
-    
-    return categories.filter(c => !descendants.has(c.id))
-  }
+      descendants.add(id);
+      categories
+        .filter((c) => c.parent_id === id)
+        .forEach((c) => findDescendants(c.id));
+    };
+    findDescendants(editingCategory.id);
+
+    return categories.filter((c) => !descendants.has(c.id));
+  };
 
   return (
     <div className="p-6">
@@ -309,10 +325,13 @@ export default function CategoriesPage({
             Organize your products into categories
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) resetForm()
-        }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -322,12 +341,12 @@ export default function CategoriesPage({
           <DialogContent>
             <DialogHeader>
               <DialogTitle>
-                {editingCategory ? 'Edit Category' : 'Add Category'}
+                {editingCategory ? "Edit Category" : "Add Category"}
               </DialogTitle>
               <DialogDescription>
                 {editingCategory
-                  ? 'Update the category details'
-                  : 'Create a new product category'}
+                  ? "Update the category details"
+                  : "Create a new product category"}
               </DialogDescription>
             </DialogHeader>
             <form onSubmit={handleSubmit}>
@@ -370,7 +389,9 @@ export default function CategoriesPage({
                       <SelectValue placeholder="No parent (root category)" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">No parent (root category)</SelectItem>
+                      <SelectItem value="none">
+                        No parent (root category)
+                      </SelectItem>
                       {getAvailableParents().map((cat) => (
                         <SelectItem key={cat.id} value={cat.id}>
                           {cat.name}
@@ -385,8 +406,8 @@ export default function CategoriesPage({
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setDialogOpen(false)
-                    resetForm()
+                    setDialogOpen(false);
+                    resetForm();
                   }}
                   disabled={saving}
                 >
@@ -396,12 +417,12 @@ export default function CategoriesPage({
                   {saving ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {editingCategory ? 'Updating...' : 'Creating...'}
+                      {editingCategory ? "Updating..." : "Creating..."}
                     </>
                   ) : editingCategory ? (
-                    'Update Category'
+                    "Update Category"
                   ) : (
-                    'Create Category'
+                    "Create Category"
                   )}
                 </Button>
               </DialogFooter>
@@ -426,7 +447,9 @@ export default function CategoriesPage({
             <div className="text-center py-8 text-muted-foreground">
               <FolderTree className="w-12 h-12 mx-auto mb-3 opacity-50" />
               <p>No categories yet</p>
-              <p className="text-sm">Add your first category to organize products</p>
+              <p className="text-sm">
+                Add your first category to organize products
+              </p>
             </div>
           ) : (
             <div className="space-y-1">
@@ -444,5 +467,5 @@ export default function CategoriesPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

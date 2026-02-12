@@ -1,26 +1,26 @@
-'use client'
+"use client";
 
-import { useRef } from 'react'
-import { useReactToPrint } from 'react-to-print'
+import { useRef } from "react";
+import { useReactToPrint } from "react-to-print";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
-import { Printer, X, Download } from 'lucide-react'
-import type { Bill, Shop, BillItem } from '@/types'
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Printer } from "lucide-react";
+import type { Bill, Shop, BillItem } from "@/types";
 
 interface BillReceiptProps {
-  bill: Bill & { items: BillItem[] }
-  shop: Shop
-  open: boolean
-  onClose: () => void
+  bill: Bill & { items: BillItem[] };
+  shop: Shop;
+  open: boolean;
+  onClose: () => void;
 }
 
 export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
-  const printRef = useRef<HTMLDivElement>(null)
+  const printRef = useRef<HTMLDivElement>(null);
 
   const handlePrint = useReactToPrint({
     contentRef: printRef,
@@ -37,25 +37,25 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
         }
       }
     `,
-  })
+  });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 2,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('en-IN', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
+    return new Date(date).toLocaleDateString("en-IN", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
@@ -63,15 +63,10 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center justify-between">
             <span>Bill #{bill.bill_number}</span>
-            <div className="flex gap-2">
-              <Button size="sm" variant="outline" onClick={() => handlePrint()}>
-                <Printer className="w-4 h-4 mr-2" />
-                Print
-              </Button>
-              <Button size="sm" variant="ghost" onClick={onClose}>
-                <X className="w-4 h-4" />
-              </Button>
-            </div>
+            <Button size="sm" variant="outline" onClick={() => handlePrint()}>
+              <Printer className="w-4 h-4 mr-2" />
+              Print
+            </Button>
           </DialogTitle>
         </DialogHeader>
 
@@ -79,20 +74,14 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
         <div
           ref={printRef}
           className="bg-white text-black p-4 font-mono text-xs"
-          style={{ width: '80mm', margin: '0 auto' }}
+          style={{ width: "80mm", margin: "0 auto" }}
         >
           {/* Header */}
           <div className="text-center mb-4">
             <h1 className="text-lg font-bold">{shop.name}</h1>
-            {shop.name_tamil && (
-              <p className="text-sm">{shop.name_tamil}</p>
-            )}
-            {shop.address && (
-              <p className="text-xs mt-1">{shop.address}</p>
-            )}
-            {shop.phone && (
-              <p className="text-xs">Tel: {shop.phone}</p>
-            )}
+            {shop.name_tamil && <p className="text-sm">{shop.name_tamil}</p>}
+            {shop.address && <p className="text-xs mt-1">{shop.address}</p>}
+            {shop.phone && <p className="text-xs">Tel: {shop.phone}</p>}
             {shop.gstin && (
               <p className="text-xs font-semibold mt-1">GSTIN: {shop.gstin}</p>
             )}
@@ -143,16 +132,15 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
             {bill.items.map((item, index) => (
               <div key={item.id || index} className="text-xs">
                 <div className="flex">
-                  <span className="flex-1 truncate">
-                    {item.product_name}
-                    {item.product_name_tamil && (
-                      <span className="block text-[10px] text-gray-600">
-                        {item.product_name_tamil}
-                      </span>
-                    )}
+                  <span className="flex-1 break-words pr-1">
+                    {item.product_name_tamil || item.product_name}
                   </span>
-                  <span className="w-12 text-right">{item.quantity}</span>
-                  <span className="w-16 text-right">{item.unit_price.toFixed(2)}</span>
+                  <span className="w-14 text-right whitespace-nowrap">
+                    {item.quantity} {item.unit}
+                  </span>
+                  <span className="w-16 text-right">
+                    {item.unit_price.toFixed(2)}
+                  </span>
                   <span className="w-16 text-right font-semibold">
                     {(item.quantity * item.unit_price).toFixed(2)}
                   </span>
@@ -201,7 +189,9 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
           <div className="text-xs mb-3">
             <div className="flex justify-between">
               <span>Payment Method:</span>
-              <span className="font-semibold uppercase">{bill.payment_method}</span>
+              <span className="font-semibold uppercase">
+                {bill.payment_method}
+              </span>
             </div>
           </div>
 
@@ -211,9 +201,7 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
             <p className="mt-1 text-[10px] text-gray-600">
               Please retain this bill for any returns or exchanges.
             </p>
-            <p className="mt-2 text-[10px]">
-              *** Powered by Kanaku360 ***
-            </p>
+            <p className="mt-2 text-[10px]">*** Powered by Kanaku360 ***</p>
           </div>
 
           {/* GST Summary */}
@@ -244,5 +232,5 @@ export function BillReceipt({ bill, shop, open, onClose }: BillReceiptProps) {
         </div>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

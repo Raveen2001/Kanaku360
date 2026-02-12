@@ -1,8 +1,8 @@
-'use client'
+"use client";
 
-import Link from 'next/link'
-import { usePathname, useParams } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import Link from "next/link";
+import { usePathname, useParams } from "next/navigation";
+import { cn } from "@/lib/utils";
 import {
   Store,
   LayoutDashboard,
@@ -19,161 +19,169 @@ import {
   LogOut,
   ChevronDown,
   Plus,
-} from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { Separator } from '@/components/ui/separator'
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
-} from '@/components/ui/collapsible'
-import { useState } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import { useRouter } from 'next/navigation'
-import type { Shop } from '@/types'
+} from "@/components/ui/collapsible";
+import { useState } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useRouter } from "next/navigation";
+import type { Shop } from "@/types";
 
 interface SidebarProps {
-  shops: Shop[]
-  currentShop: Shop | null
-  userRole: string | null
+  shops: Shop[];
+  currentShop: Shop | null;
+  userRole: string | null;
 }
 
 export function Sidebar({ shops, currentShop, userRole }: SidebarProps) {
-  const pathname = usePathname()
-  const params = useParams()
-  const router = useRouter()
-  const shopId = params.shopId as string
-  const [shopsOpen, setShopsOpen] = useState(true)
+  const pathname = usePathname();
+  const params = useParams();
+  const router = useRouter();
+  const shopId = params.shopId as string;
+  const [shopsOpen, setShopsOpen] = useState(true);
 
-  const isAdmin = userRole === 'admin'
+  const isAdmin = userRole === "admin";
 
   const handleSignOut = async () => {
-    const supabase = createClient()
-    await supabase.auth.signOut()
-    router.push('/login')
-    router.refresh()
-  }
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  };
 
   const mainNavItems = [
     {
-      title: 'Dashboard',
+      title: "Dashboard",
       href: `/shops/${shopId}`,
       icon: LayoutDashboard,
       exact: true,
     },
     {
-      title: 'Billing',
+      title: "Billing",
       href: `/shops/${shopId}/billing`,
       icon: Receipt,
     },
     {
-      title: 'Bills History',
+      title: "Bills History",
       href: `/shops/${shopId}/bills`,
       icon: History,
     },
-  ]
+  ];
 
   const catalogNavItems = [
     {
-      title: 'Products',
+      title: "Products",
       href: `/shops/${shopId}/products`,
       icon: Package,
       adminOnly: false,
     },
     {
-      title: 'Categories',
+      title: "Categories",
       href: `/shops/${shopId}/categories`,
       icon: FolderTree,
       adminOnly: true,
     },
     {
-      title: 'Brands',
+      title: "Brands",
       href: `/shops/${shopId}/brands`,
       icon: Tag,
       adminOnly: true,
     },
     {
-      title: 'Price Types',
+      title: "Price Types",
       href: `/shops/${shopId}/price-types`,
       icon: DollarSign,
       adminOnly: true,
     },
-  ]
+  ];
 
   const inventoryNavItems = [
     {
-      title: 'Inventory',
+      title: "Inventory",
       href: `/shops/${shopId}/inventory`,
       icon: Package,
       adminOnly: true,
     },
     {
-      title: 'Suppliers',
+      title: "Suppliers",
       href: `/shops/${shopId}/suppliers`,
       icon: Truck,
       adminOnly: true,
     },
     {
-      title: 'Purchase Orders',
+      title: "Purchase Orders",
       href: `/shops/${shopId}/purchase-orders`,
       icon: ClipboardList,
       adminOnly: true,
     },
-  ]
+  ];
 
   const settingsNavItems = [
     {
-      title: 'Employees',
+      title: "Employees",
       href: `/shops/${shopId}/employees`,
       icon: Users,
       adminOnly: true,
     },
     {
-      title: 'Shop Settings',
+      title: "Shop Settings",
       href: `/shops/${shopId}/settings`,
       icon: Settings,
       adminOnly: true,
     },
-  ]
+  ];
 
-  const NavItem = ({ item }: { item: typeof mainNavItems[0] & { adminOnly?: boolean; exact?: boolean } }) => {
-    if (item.adminOnly && !isAdmin) return null
+  const NavItem = ({
+    item,
+  }: {
+    item: (typeof mainNavItems)[0] & { adminOnly?: boolean; exact?: boolean };
+  }) => {
+    if (item.adminOnly && !isAdmin) return null;
 
-    const isActive = item.exact 
+    const isActive = item.exact
       ? pathname === item.href
-      : pathname.startsWith(item.href)
+      : pathname.startsWith(item.href);
 
     return (
       <Link href={item.href}>
         <span
           className={cn(
-            'flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors',
+            "flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors",
             isActive
-              ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
-              : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+              ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
+              : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground",
           )}
         >
           <item.icon className="h-4 w-4" />
           {item.title}
         </span>
       </Link>
-    )
-  }
+    );
+  };
 
   return (
-    <div className="flex h-screen w-64 flex-col bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
+    <div className="flex h-screen w-64 flex-col overflow-hidden bg-sidebar text-sidebar-foreground border-r border-sidebar-border">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-2 px-4 border-b border-sidebar-border">
+      <div className="flex h-16 shrink-0 items-center gap-2 px-4 border-b border-sidebar-border">
         <div className="w-9 h-9 bg-sidebar-primary rounded-xl flex items-center justify-center">
           <Store className="w-5 h-5 text-sidebar-primary-foreground" />
         </div>
         <span className="text-lg font-bold">Kanaku360</span>
       </div>
 
-      <ScrollArea className="flex-1 px-3 py-4">
+      <ScrollArea className="flex-1 h-0 px-3 py-4">
         {/* Shop Selector */}
-        <Collapsible open={shopsOpen} onOpenChange={setShopsOpen} className="mb-4">
+        <Collapsible
+          open={shopsOpen}
+          onOpenChange={setShopsOpen}
+          className="mb-4"
+        >
           <CollapsibleTrigger asChild>
             <Button
               variant="ghost"
@@ -185,17 +193,19 @@ export function Sidebar({ shops, currentShop, userRole }: SidebarProps) {
                 </div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">
-                    {currentShop?.name || 'Select Shop'}
+                    {currentShop?.name || "Select Shop"}
                   </p>
                   <p className="text-xs text-sidebar-foreground/60 truncate">
-                    {currentShop?.name_tamil || 'No shop selected'}
+                    {currentShop?.name_tamil || "No shop selected"}
                   </p>
                 </div>
               </div>
-              <ChevronDown className={cn(
-                'h-4 w-4 transition-transform flex-shrink-0',
-                shopsOpen && 'rotate-180'
-              )} />
+              <ChevronDown
+                className={cn(
+                  "h-4 w-4 transition-transform flex-shrink-0",
+                  shopsOpen && "rotate-180",
+                )}
+              />
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="mt-2 space-y-1">
@@ -203,10 +213,10 @@ export function Sidebar({ shops, currentShop, userRole }: SidebarProps) {
               <Link key={shop.id} href={`/shops/${shop.id}`}>
                 <span
                   className={cn(
-                    'flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors',
+                    "flex items-center gap-2 rounded-lg px-3 py-2 text-sm transition-colors",
                     shop.id === shopId
-                      ? 'bg-sidebar-accent text-sidebar-accent-foreground'
-                      : 'text-sidebar-foreground/70 hover:bg-sidebar-accent/50'
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                      : "text-sidebar-foreground/70 hover:bg-sidebar-accent/50",
                   )}
                 >
                   <Store className="h-4 w-4" />
@@ -278,7 +288,7 @@ export function Sidebar({ shops, currentShop, userRole }: SidebarProps) {
       </ScrollArea>
 
       {/* Footer */}
-      <div className="p-4 border-t border-sidebar-border">
+      <div className="shrink-0 p-4 border-t border-sidebar-border">
         <Button
           variant="ghost"
           className="w-full justify-start gap-3 text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
@@ -289,5 +299,5 @@ export function Sidebar({ shops, currentShop, userRole }: SidebarProps) {
         </Button>
       </div>
     </div>
-  )
+  );
 }

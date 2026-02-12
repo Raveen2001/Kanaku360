@@ -1,17 +1,17 @@
-'use client'
+"use client";
 
-import { useState, useEffect, use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { useState, useEffect, use } from "react";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -19,15 +19,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 import {
   Package,
   Plus,
@@ -38,89 +44,91 @@ import {
   Trash2,
   Eye,
   AlertTriangle,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import type { Product, Category, Brand } from '@/types'
+} from "lucide-react";
+import { toast } from "sonner";
+import type { Product, Category, Brand } from "@/types";
 
 export default function ProductsPage({
   params,
 }: {
-  params: Promise<{ shopId: string }>
+  params: Promise<{ shopId: string }>;
 }) {
-  const { shopId } = use(params)
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [brands, setBrands] = useState<Brand[]>([])
-  const [loading, setLoading] = useState(true)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState<string>('')
-  const [brandFilter, setBrandFilter] = useState<string>('')
+  const { shopId } = use(params);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [brands, setBrands] = useState<Brand[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("all");
+  const [brandFilter, setBrandFilter] = useState<string>("all");
 
   async function fetchData() {
-    const supabase = createClient()
-    
+    const supabase = createClient();
+
     const [productsRes, categoriesRes, brandsRes] = await Promise.all([
       supabase
-        .from('products')
-        .select(`
+        .from("products")
+        .select(
+          `
           *,
           category:categories(id, name),
           brand:brands(id, name)
-        `)
-        .eq('shop_id', shopId)
-        .order('name', { ascending: true }),
+        `,
+        )
+        .eq("shop_id", shopId)
+        .order("name", { ascending: true }),
       supabase
-        .from('categories')
-        .select('id, name')
-        .eq('shop_id', shopId)
-        .order('name'),
+        .from("categories")
+        .select("id, name")
+        .eq("shop_id", shopId)
+        .order("name"),
       supabase
-        .from('brands')
-        .select('id, name')
-        .eq('shop_id', shopId)
-        .order('name'),
-    ])
+        .from("brands")
+        .select("id, name")
+        .eq("shop_id", shopId)
+        .order("name"),
+    ]);
 
-    setProducts((productsRes.data as any) || [])
-    setCategories((categoriesRes.data as any) || [])
-    setBrands((brandsRes.data as any) || [])
-    setLoading(false)
+    setProducts((productsRes.data as any) || []);
+    setCategories((categoriesRes.data as any) || []);
+    setBrands((brandsRes.data as any) || []);
+    setLoading(false);
   }
 
   useEffect(() => {
-    fetchData()
-  }, [shopId])
+    fetchData();
+  }, [shopId]);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return
+    if (!confirm("Are you sure you want to delete this product?")) return;
 
-    const supabase = createClient()
-    const { error } = await supabase.from('products').delete().eq('id', id)
+    const supabase = createClient();
+    const { error } = await supabase.from("products").delete().eq("id", id);
 
     if (error) {
-      toast.error(error.message)
-      return
+      toast.error(error.message);
+      return;
     }
 
-    toast.success('Product deleted')
-    fetchData()
-  }
+    toast.success("Product deleted");
+    fetchData();
+  };
 
   const handleToggleActive = async (id: string, isActive: boolean) => {
-    const supabase = createClient()
+    const supabase = createClient();
     const { error } = await supabase
-      .from('products')
+      .from("products")
       .update({ is_active: !isActive })
-      .eq('id', id)
+      .eq("id", id);
 
     if (error) {
-      toast.error(error.message)
-      return
+      toast.error(error.message);
+      return;
     }
 
-    toast.success(isActive ? 'Product deactivated' : 'Product activated')
-    fetchData()
-  }
+    toast.success(isActive ? "Product deactivated" : "Product activated");
+    fetchData();
+  };
 
   const filteredProducts = products.filter((product) => {
     const matchesSearch =
@@ -128,23 +136,24 @@ export default function ProductsPage({
       product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.name_tamil?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       product.sku?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      product.barcode?.toLowerCase().includes(searchQuery.toLowerCase())
+      product.barcode?.toLowerCase().includes(searchQuery.toLowerCase());
 
     const matchesCategory =
-      !categoryFilter || product.category_id === categoryFilter
+      categoryFilter === "all" || product.category_id === categoryFilter;
 
-    const matchesBrand = !brandFilter || product.brand_id === brandFilter
+    const matchesBrand =
+      brandFilter === "all" || product.brand_id === brandFilter;
 
-    return matchesSearch && matchesCategory && matchesBrand
-  })
+    return matchesSearch && matchesCategory && matchesBrand;
+  });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   return (
     <div className="p-6">
@@ -190,7 +199,7 @@ export default function ProductsPage({
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((cat) => (
                   <SelectItem key={cat.id} value={cat.id}>
                     {cat.name}
@@ -203,7 +212,7 @@ export default function ProductsPage({
                 <SelectValue placeholder="All Brands" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Brands</SelectItem>
+                <SelectItem value="all">All Brands</SelectItem>
                 {brands.map((brand) => (
                   <SelectItem key={brand.id} value={brand.id}>
                     {brand.name}
@@ -259,9 +268,9 @@ export default function ProductsPage({
                       </TableCell>
                       <TableCell>
                         <div className="text-sm">
-                          <p>{product.category?.name || '-'}</p>
+                          <p>{product.category?.name || "-"}</p>
                           <p className="text-muted-foreground">
-                            {product.brand?.name || '-'}
+                            {product.brand?.name || "-"}
                           </p>
                         </div>
                       </TableCell>
@@ -272,20 +281,28 @@ export default function ProductsPage({
                         {formatCurrency(product.default_selling_price)}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex items-center justify-end gap-2">
-                          {product.stock_quantity <= product.low_stock_threshold && (
-                            <AlertTriangle className="w-4 h-4 text-warning" />
-                          )}
-                          <span
-                            className={
-                              product.stock_quantity <= product.low_stock_threshold
-                                ? 'text-warning font-medium'
-                                : ''
-                            }
-                          >
-                            {product.stock_quantity} {product.unit}
+                        {product.track_inventory ? (
+                          <div className="flex items-center justify-end gap-2">
+                            {product.stock_quantity <=
+                              product.low_stock_threshold && (
+                              <AlertTriangle className="w-4 h-4 text-warning" />
+                            )}
+                            <span
+                              className={
+                                product.stock_quantity <=
+                                product.low_stock_threshold
+                                  ? "text-warning font-medium"
+                                  : ""
+                              }
+                            >
+                              {product.stock_quantity} {product.unit}
+                            </span>
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground text-sm">
+                            Not tracked
                           </span>
-                        </div>
+                        )}
                       </TableCell>
                       <TableCell>
                         {product.is_active ? (
@@ -305,23 +322,30 @@ export default function ProductsPage({
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem asChild>
-                              <Link href={`/shops/${shopId}/products/${product.id}`}>
+                              <Link
+                                href={`/shops/${shopId}/products/${product.id}`}
+                              >
                                 <Eye className="h-4 w-4 mr-2" />
                                 View Details
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
-                              <Link href={`/shops/${shopId}/products/${product.id}/edit`}>
+                              <Link
+                                href={`/shops/${shopId}/products/${product.id}/edit`}
+                              >
                                 <Pencil className="h-4 w-4 mr-2" />
                                 Edit
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() =>
-                                handleToggleActive(product.id, product.is_active)
+                                handleToggleActive(
+                                  product.id,
+                                  product.is_active,
+                                )
                               }
                             >
-                              {product.is_active ? 'Deactivate' : 'Activate'}
+                              {product.is_active ? "Deactivate" : "Activate"}
                             </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handleDelete(product.id)}
@@ -342,5 +366,5 @@ export default function ProductsPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

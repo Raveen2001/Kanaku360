@@ -1,10 +1,15 @@
 // Database Types for Kanaku360
 
-export type UserRole = 'admin' | 'cashier';
-export type EmployeeStatus = 'pending' | 'active' | 'inactive';
-export type PaymentMethod = 'cash' | 'card' | 'upi' | 'credit';
-export type StockMovementType = 'purchase' | 'sale' | 'adjustment' | 'return';
-export type PurchaseOrderStatus = 'draft' | 'ordered' | 'partial' | 'received' | 'cancelled';
+export type UserRole = "admin" | "cashier";
+export type EmployeeStatus = "pending" | "active" | "inactive";
+export type PaymentMethod = "cash" | "card" | "upi" | "credit";
+export type StockMovementType = "purchase" | "sale" | "adjustment" | "return";
+export type PurchaseOrderStatus =
+  | "draft"
+  | "ordered"
+  | "partial"
+  | "received"
+  | "cancelled";
 
 export interface User {
   id: string;
@@ -93,6 +98,7 @@ export interface Product {
   gst_percent: number;
   hsn_code: string | null;
   unit: string;
+  track_inventory: boolean;
   stock_quantity: number;
   low_stock_threshold: number;
   image_url: string | null;
@@ -131,7 +137,7 @@ export interface Bill {
   gst_amount: number;
   total: number;
   payment_method: PaymentMethod;
-  payment_status: 'paid' | 'pending' | 'partial';
+  payment_status: "paid" | "pending" | "partial";
   notes: string | null;
   created_by: string;
   created_at: string;
@@ -216,7 +222,7 @@ export interface StockMovement {
   quantity: number;
   quantity_before: number;
   quantity_after: number;
-  reference_type: 'bill' | 'purchase_order' | 'adjustment' | null;
+  reference_type: "bill" | "purchase_order" | "adjustment" | null;
   reference_id: string | null;
   notes: string | null;
   created_by: string;
@@ -276,6 +282,7 @@ export interface CreateProductForm {
   gst_percent: number;
   hsn_code?: string;
   unit: string;
+  track_inventory: boolean;
   stock_quantity: number;
   low_stock_threshold: number;
   is_active: boolean;

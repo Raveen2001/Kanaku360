@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useState, useEffect, use } from 'react'
-import { createClient } from '@/lib/supabase/client'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { useState, useEffect, use } from "react";
+import { createClient } from "@/lib/supabase/client";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select'
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from '@/components/ui/dialog'
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -29,15 +29,21 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+} from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
+} from "@/components/ui/dropdown-menu";
 import {
   ClipboardList,
   Plus,
@@ -48,112 +54,124 @@ import {
   PackageCheck,
   Trash2,
   Minus,
-} from 'lucide-react'
-import { toast } from 'sonner'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import type { PurchaseOrder, Supplier, Product, PurchaseOrderStatus } from '@/types'
+} from "lucide-react";
+import { toast } from "sonner";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import type {
+  PurchaseOrder,
+  Supplier,
+  Product,
+  PurchaseOrderStatus,
+} from "@/types";
 
 export default function PurchaseOrdersPage({
   params,
 }: {
-  params: Promise<{ shopId: string }>
+  params: Promise<{ shopId: string }>;
 }) {
-  const { shopId } = use(params)
-  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([])
-  const [suppliers, setSuppliers] = useState<Supplier[]>([])
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [saving, setSaving] = useState(false)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState<string>('')
-  
+  const { shopId } = use(params);
+  const [purchaseOrders, setPurchaseOrders] = useState<PurchaseOrder[]>([]);
+  const [suppliers, setSuppliers] = useState<Supplier[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+
   const [formData, setFormData] = useState({
-    supplier_id: '',
-    notes: '',
-  })
-  
+    supplier_id: "",
+    notes: "",
+  });
+
   const [orderItems, setOrderItems] = useState<
     { product_id: string; quantity: number; unit_cost: number }[]
-  >([])
+  >([]);
 
   async function fetchData() {
-    const supabase = createClient()
-    
+    const supabase = createClient();
+
     const [poRes, suppliersRes, productsRes] = await Promise.all([
       supabase
-        .from('purchase_orders')
-        .select(`
+        .from("purchase_orders")
+        .select(
+          `
           *,
           supplier:suppliers(id, name),
           items:purchase_order_items(
             *,
             product:products(id, name, cost_price)
           )
-        `)
-        .eq('shop_id', shopId)
-        .order('created_at', { ascending: false }),
+        `,
+        )
+        .eq("shop_id", shopId)
+        .order("created_at", { ascending: false }),
       supabase
-        .from('suppliers')
-        .select('*')
-        .eq('shop_id', shopId)
-        .order('name'),
+        .from("suppliers")
+        .select("*")
+        .eq("shop_id", shopId)
+        .order("name"),
       supabase
-        .from('products')
-        .select('*')
-        .eq('shop_id', shopId)
-        .eq('is_active', true)
-        .order('name'),
-    ])
+        .from("products")
+        .select("*")
+        .eq("shop_id", shopId)
+        .eq("is_active", true)
+        .order("name"),
+    ]);
 
-    setPurchaseOrders((poRes.data as any) || [])
-    setSuppliers(suppliersRes.data || [])
-    setProducts(productsRes.data || [])
-    setLoading(false)
+    setPurchaseOrders((poRes.data as any) || []);
+    setSuppliers(suppliersRes.data || []);
+    setProducts(productsRes.data || []);
+    setLoading(false);
   }
 
   useEffect(() => {
-    fetchData()
-  }, [shopId])
+    fetchData();
+  }, [shopId]);
 
   const handleCreatePO = async (e: React.FormEvent) => {
-    e.preventDefault()
-    
+    e.preventDefault();
+
     if (orderItems.length === 0) {
-      toast.error('Add at least one item to the order')
-      return
+      toast.error("Add at least one item to the order");
+      return;
     }
-    
-    setSaving(true)
+
+    setSaving(true);
 
     try {
-      const supabase = createClient()
-      const { data: { user } } = await supabase.auth.getUser()
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
 
       if (!user) {
-        toast.error('You must be logged in')
-        return
+        toast.error("You must be logged in");
+        return;
       }
 
       // Generate PO number
-      const { data: poNumber } = await (supabase.rpc as any)('generate_po_number', {
-        p_shop_id: shopId,
-      })
+      const { data: poNumber } = await (supabase.rpc as any)(
+        "generate_po_number",
+        {
+          p_shop_id: shopId,
+        },
+      );
 
       // Calculate totals
       const subtotal = orderItems.reduce(
         (sum, item) => sum + item.quantity * item.unit_cost,
-        0
-      )
+        0,
+      );
 
       // Create purchase order
       const { data: po, error: poError } = await supabase
-        .from('purchase_orders')
+        .from("purchase_orders")
         .insert({
           shop_id: shopId,
           supplier_id: formData.supplier_id,
           po_number: poNumber,
-          status: 'draft',
+          status: "draft",
           subtotal,
           tax_amount: 0,
           total_amount: subtotal,
@@ -161,11 +179,11 @@ export default function PurchaseOrdersPage({
           created_by: user.id,
         })
         .select()
-        .single()
+        .single();
 
       if (poError) {
-        toast.error(poError.message)
-        return
+        toast.error(poError.message);
+        return;
       }
 
       // Create order items
@@ -176,175 +194,188 @@ export default function PurchaseOrdersPage({
         quantity_received: 0,
         unit_cost: item.unit_cost,
         total: item.quantity * item.unit_cost,
-      }))
+      }));
 
       const { error: itemsError } = await supabase
-        .from('purchase_order_items')
-        .insert(items)
+        .from("purchase_order_items")
+        .insert(items);
 
       if (itemsError) {
-        console.error('Error creating PO items:', itemsError)
+        console.error("Error creating PO items:", itemsError);
       }
 
-      toast.success('Purchase order created!')
-      setDialogOpen(false)
-      resetForm()
-      fetchData()
+      toast.success("Purchase order created!");
+      setDialogOpen(false);
+      resetForm();
+      fetchData();
     } catch {
-      toast.error('An unexpected error occurred')
+      toast.error("An unexpected error occurred");
     } finally {
-      setSaving(false)
+      setSaving(false);
     }
-  }
+  };
 
   const handleReceivePO = async (poId: string) => {
-    const supabase = createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    const supabase = createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
 
     if (!user) {
-      toast.error('You must be logged in')
-      return
+      toast.error("You must be logged in");
+      return;
     }
 
     // Get PO with items
     const { data: po } = await supabase
-      .from('purchase_orders')
-      .select(`
+      .from("purchase_orders")
+      .select(
+        `
         *,
         items:purchase_order_items(
           *,
           product:products(id, stock_quantity)
         )
-      `)
-      .eq('id', poId)
-      .single()
+      `,
+      )
+      .eq("id", poId)
+      .single();
 
     if (!po) {
-      toast.error('Purchase order not found')
-      return
+      toast.error("Purchase order not found");
+      return;
     }
 
     // Update stock for each item
     for (const item of (po as any).items) {
-      const product = item.product
-      const quantityToReceive = item.quantity_ordered - item.quantity_received
-      const newStock = product.stock_quantity + quantityToReceive
+      const product = item.product;
+      const quantityToReceive = item.quantity_ordered - item.quantity_received;
+      const newStock = product.stock_quantity + quantityToReceive;
 
       // Update product stock
       await supabase
-        .from('products')
+        .from("products")
         .update({ stock_quantity: newStock })
-        .eq('id', item.product_id)
+        .eq("id", item.product_id);
 
       // Update PO item
       await supabase
-        .from('purchase_order_items')
+        .from("purchase_order_items")
         .update({ quantity_received: item.quantity_ordered })
-        .eq('id', item.id)
+        .eq("id", item.id);
 
       // Create stock movement
-      await supabase.from('stock_movements').insert({
+      await supabase.from("stock_movements").insert({
         shop_id: shopId,
         product_id: item.product_id,
-        type: 'purchase',
+        type: "purchase",
         quantity: quantityToReceive,
         quantity_before: product.stock_quantity,
         quantity_after: newStock,
-        reference_type: 'purchase_order',
+        reference_type: "purchase_order",
         reference_id: poId,
         created_by: user.id,
-      })
+      });
     }
 
     // Update PO status
     await supabase
-      .from('purchase_orders')
-      .update({ status: 'received', received_date: new Date().toISOString() })
-      .eq('id', poId)
+      .from("purchase_orders")
+      .update({ status: "received", received_date: new Date().toISOString() })
+      .eq("id", poId);
 
-    toast.success('Stock received successfully!')
-    fetchData()
-  }
+    toast.success("Stock received successfully!");
+    fetchData();
+  };
 
   const handleDeletePO = async (poId: string) => {
-    if (!confirm('Are you sure you want to delete this purchase order?')) return
+    if (!confirm("Are you sure you want to delete this purchase order?"))
+      return;
 
-    const supabase = createClient()
+    const supabase = createClient();
     const { error } = await supabase
-      .from('purchase_orders')
+      .from("purchase_orders")
       .delete()
-      .eq('id', poId)
+      .eq("id", poId);
 
     if (error) {
-      toast.error(error.message)
-      return
+      toast.error(error.message);
+      return;
     }
 
-    toast.success('Purchase order deleted')
-    fetchData()
-  }
+    toast.success("Purchase order deleted");
+    fetchData();
+  };
 
   const addOrderItem = () => {
-    setOrderItems([...orderItems, { product_id: '', quantity: 1, unit_cost: 0 }])
-  }
+    setOrderItems([
+      ...orderItems,
+      { product_id: "", quantity: 1, unit_cost: 0 },
+    ]);
+  };
 
   const updateOrderItem = (
     index: number,
     field: string,
-    value: string | number
+    value: string | number,
   ) => {
-    const newItems = [...orderItems]
-    newItems[index] = { ...newItems[index], [field]: value }
-    
+    const newItems = [...orderItems];
+    newItems[index] = { ...newItems[index], [field]: value };
+
     // Auto-fill unit cost when product is selected
-    if (field === 'product_id') {
-      const product = products.find((p) => p.id === value)
+    if (field === "product_id") {
+      const product = products.find((p) => p.id === value);
       if (product) {
-        newItems[index].unit_cost = product.cost_price
+        newItems[index].unit_cost = product.cost_price;
       }
     }
-    
-    setOrderItems(newItems)
-  }
+
+    setOrderItems(newItems);
+  };
 
   const removeOrderItem = (index: number) => {
-    setOrderItems(orderItems.filter((_, i) => i !== index))
-  }
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
 
   const resetForm = () => {
-    setFormData({ supplier_id: '', notes: '' })
-    setOrderItems([])
-  }
+    setFormData({ supplier_id: "", notes: "" });
+    setOrderItems([]);
+  };
 
   const filteredPOs = purchaseOrders.filter((po) => {
     const matchesSearch =
       !searchQuery ||
       po.po_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (po as any).supplier?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      (po as any).supplier?.name
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
 
-    const matchesStatus = !statusFilter || po.status === statusFilter
+    const matchesStatus = statusFilter === "all" || po.status === statusFilter;
 
-    return matchesSearch && matchesStatus
-  })
+    return matchesSearch && matchesStatus;
+  });
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-IN', {
-      style: 'currency',
-      currency: 'INR',
+    return new Intl.NumberFormat("en-IN", {
+      style: "currency",
+      currency: "INR",
       maximumFractionDigits: 0,
-    }).format(amount)
-  }
+    }).format(amount);
+  };
 
   const getStatusBadge = (status: PurchaseOrderStatus) => {
     const variants: Record<string, string> = {
-      draft: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400',
-      ordered: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400',
-      partial: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400',
-      received: 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400',
-      cancelled: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400',
-    }
-    return <Badge className={variants[status]}>{status.toUpperCase()}</Badge>
-  }
+      draft: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400",
+      ordered:
+        "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400",
+      partial:
+        "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-400",
+      received:
+        "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400",
+      cancelled: "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400",
+    };
+    return <Badge className={variants[status]}>{status.toUpperCase()}</Badge>;
+  };
 
   return (
     <div className="p-6">
@@ -358,10 +389,13 @@ export default function PurchaseOrdersPage({
             Manage stock purchases from suppliers
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (!open) resetForm()
-        }}>
+        <Dialog
+          open={dialogOpen}
+          onOpenChange={(open) => {
+            setDialogOpen(open);
+            if (!open) resetForm();
+          }}
+        >
           <DialogTrigger asChild>
             <Button className="gap-2">
               <Plus className="w-4 h-4" />
@@ -430,7 +464,7 @@ export default function PurchaseOrdersPage({
                               <Select
                                 value={item.product_id}
                                 onValueChange={(value) =>
-                                  updateOrderItem(index, 'product_id', value)
+                                  updateOrderItem(index, "product_id", value)
                                 }
                               >
                                 <SelectTrigger>
@@ -438,7 +472,10 @@ export default function PurchaseOrdersPage({
                                 </SelectTrigger>
                                 <SelectContent>
                                   {products.map((product) => (
-                                    <SelectItem key={product.id} value={product.id}>
+                                    <SelectItem
+                                      key={product.id}
+                                      value={product.id}
+                                    >
                                       {product.name}
                                     </SelectItem>
                                   ))}
@@ -452,7 +489,11 @@ export default function PurchaseOrdersPage({
                                 min="1"
                                 value={item.quantity}
                                 onChange={(e) =>
-                                  updateOrderItem(index, 'quantity', parseInt(e.target.value) || 1)
+                                  updateOrderItem(
+                                    index,
+                                    "quantity",
+                                    parseInt(e.target.value) || 1,
+                                  )
                                 }
                               />
                             </div>
@@ -464,7 +505,11 @@ export default function PurchaseOrdersPage({
                                 min="0"
                                 value={item.unit_cost}
                                 onChange={(e) =>
-                                  updateOrderItem(index, 'unit_cost', parseFloat(e.target.value) || 0)
+                                  updateOrderItem(
+                                    index,
+                                    "unit_cost",
+                                    parseFloat(e.target.value) || 0,
+                                  )
                                 }
                               />
                             </div>
@@ -478,13 +523,15 @@ export default function PurchaseOrdersPage({
                             </Button>
                           </div>
                         ))}
-                        
+
                         <div className="text-right font-semibold">
-                          Total: {formatCurrency(
+                          Total:{" "}
+                          {formatCurrency(
                             orderItems.reduce(
-                              (sum, item) => sum + item.quantity * item.unit_cost,
-                              0
-                            )
+                              (sum, item) =>
+                                sum + item.quantity * item.unit_cost,
+                              0,
+                            ),
                           )}
                         </div>
                       </div>
@@ -510,8 +557,8 @@ export default function PurchaseOrdersPage({
                   type="button"
                   variant="outline"
                   onClick={() => {
-                    setDialogOpen(false)
-                    resetForm()
+                    setDialogOpen(false);
+                    resetForm();
                   }}
                   disabled={saving}
                 >
@@ -519,7 +566,9 @@ export default function PurchaseOrdersPage({
                 </Button>
                 <Button
                   type="submit"
-                  disabled={saving || !formData.supplier_id || orderItems.length === 0}
+                  disabled={
+                    saving || !formData.supplier_id || orderItems.length === 0
+                  }
                 >
                   {saving ? (
                     <>
@@ -527,7 +576,7 @@ export default function PurchaseOrdersPage({
                       Creating...
                     </>
                   ) : (
-                    'Create Order'
+                    "Create Order"
                   )}
                 </Button>
               </DialogFooter>
@@ -540,7 +589,7 @@ export default function PurchaseOrdersPage({
         <CardHeader>
           <CardTitle>All Purchase Orders</CardTitle>
           <CardDescription>
-            {filteredPOs.length} order{filteredPOs.length !== 1 ? 's' : ''}
+            {filteredPOs.length} order{filteredPOs.length !== 1 ? "s" : ""}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -560,7 +609,7 @@ export default function PurchaseOrdersPage({
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="draft">Draft</SelectItem>
                 <SelectItem value="ordered">Ordered</SelectItem>
                 <SelectItem value="partial">Partial</SelectItem>
@@ -595,9 +644,13 @@ export default function PurchaseOrdersPage({
               <TableBody>
                 {filteredPOs.map((po) => (
                   <TableRow key={po.id}>
-                    <TableCell className="font-medium">{po.po_number}</TableCell>
-                    <TableCell>{(po as any).supplier?.name || '-'}</TableCell>
-                    <TableCell>{(po as any).items?.length || 0} items</TableCell>
+                    <TableCell className="font-medium">
+                      {po.po_number}
+                    </TableCell>
+                    <TableCell>{(po as any).supplier?.name || "-"}</TableCell>
+                    <TableCell>
+                      {(po as any).items?.length || 0} items
+                    </TableCell>
                     <TableCell className="text-right font-semibold">
                       {formatCurrency(po.total_amount)}
                     </TableCell>
@@ -613,13 +666,16 @@ export default function PurchaseOrdersPage({
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
-                          {(po.status === 'draft' || po.status === 'ordered') && (
-                            <DropdownMenuItem onClick={() => handleReceivePO(po.id)}>
+                          {(po.status === "draft" ||
+                            po.status === "ordered") && (
+                            <DropdownMenuItem
+                              onClick={() => handleReceivePO(po.id)}
+                            >
                               <PackageCheck className="h-4 w-4 mr-2" />
                               Receive Stock
                             </DropdownMenuItem>
                           )}
-                          {po.status === 'draft' && (
+                          {po.status === "draft" && (
                             <DropdownMenuItem
                               onClick={() => handleDeletePO(po.id)}
                               className="text-destructive"
@@ -639,5 +695,5 @@ export default function PurchaseOrdersPage({
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }
